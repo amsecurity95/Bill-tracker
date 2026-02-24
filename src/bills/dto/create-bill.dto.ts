@@ -1,10 +1,12 @@
 import { IsString, IsNumber, IsDateString, IsEmail, IsOptional, IsBoolean } from 'class-validator';
+import { Type } from 'class-transformer';
 
 export class CreateBillDto {
   @IsString()
   title: string;
 
   @IsNumber()
+  @Type(() => Number)
   amount: number;
 
   @IsDateString()

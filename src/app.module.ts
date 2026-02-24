@@ -5,16 +5,22 @@ import { BillsModule } from './bills/bills.module';
 import { ReminderModule } from './reminder/reminder.module';
 import { Bill } from './bills/entities/bill.entity';
 
+const databaseUrl =
+  process.env.DATABASE_URL ||
+  'postgresql://postgres:wWLdzVXfolLtvfNQDeqgdmEaUFAhstBy@shuttle.proxy.rlwy.net:24187/railway';
+const shouldUseDatabaseSsl =
+  process.env.DATABASE_SSL === 'true' ||
+  (process.env.DATABASE_SSL !== 'false' &&
+    !/(localhost|127\.0\.0\.1)/i.test(databaseUrl));
+
 @Module({
   imports: [
     TypeOrmModule.forRoot({
       type: 'postgres',
-      url: process.env.DATABASE_URL || 'postgresql://postgres:wWLdzVXfolLtvfNQDeqgdmEaUFAhstBy@shuttle.proxy.rlwy.net:24187/railway',
+      url: databaseUrl,
       entities: [Bill],
       synchronize: true,
-      ssl: {
-        rejectUnauthorized: false,
-      },
+      ssl: shouldUseDatabaseSsl ? { rejectUnauthorized: false } : false,
     }),
     ScheduleModule.forRoot(),
     BillsModule,

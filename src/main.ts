@@ -4,10 +4,24 @@ import { AppModule } from './app.module';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
-  
-  app.useGlobalPipes(new ValidationPipe());
+
+  const allowedOrigins = (process.env.CORS_ORIGINS ??
+    'https://billstracker.online,http://localhost:8080,http://localhost:3000,http://192.168.0.102:8080')
+    .split(',')
+    .map((origin) => origin.trim())
+    .filter(Boolean);
+
+  app.useGlobalPipes(
+    new ValidationPipe({
+      transform: true,
+      whitelist: true,
+      transformOptions: {
+        enableImplicitConversion: true,
+      },
+    }),
+  );
   app.enableCors({
-    origin: '*',
+    origin: allowedOrigins,
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
     credentials: true,
   });

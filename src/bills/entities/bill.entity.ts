@@ -8,7 +8,18 @@ export class Bill {
   @Column()
   title: string;
 
-  @Column('decimal', { precision: 10, scale: 2 })
+  @Column('decimal', {
+    precision: 10,
+    scale: 2,
+    transformer: {
+      to: (value: number) => value,
+      from: (value: string | number | null) => {
+        if (typeof value === 'number') return value;
+        if (typeof value === 'string') return Number.parseFloat(value);
+        return 0;
+      },
+    },
+  })
   amount: number;
 
   @Column()
