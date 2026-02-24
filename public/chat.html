@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Bill Tracker AI Chat</title>
+    <link rel="stylesheet" href="/chat.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar">
+        <div class="sidebar-top">
+          <button id="newChatBtn" class="new-chat-btn">+ New chat</button>
+          <p class="brand">Bill Tracker AI</p>
+        </div>
+        <div class="history-wrap">
+          <p class="history-title">Recent</p>
+          <ul id="historyList" class="history-list"></ul>
+        </div>
+        <div class="sidebar-bottom">
+          <span id="healthDot" class="status-dot"></span>
+          <span id="healthText">Checking AI status...</span>
+        </div>
+      </aside>
+
+      <main class="chat-main">
+        <header class="chat-header">
+          <div class="header-titles">
+            <h1 id="chatTitle">New chat</h1>
+            <p class="header-subtitle">ChatGPT-style assistant for your bill planning</p>
+          </div>
+          <div class="model-controls">
+            <label for="modelInput">Model</label>
+            <input id="modelInput" type="text" placeholder="llama3.1" />
+          </div>
+        </header>
+
+        <section id="messages" class="messages" aria-live="polite"></section>
+
+        <form id="composerForm" class="composer-form">
+          <div class="composer">
+            <textarea
+              id="promptInput"
+              rows="1"
+              maxlength="6000"
+              placeholder="Message Bill Tracker AI..."
+              required
+            ></textarea>
+            <button id="sendBtn" type="submit">Send</button>
+          </div>
+          <p class="hint">Press Enter to send, Shift + Enter for a new line.</p>
+        </form>
+      </main>
+    </div>
+
+    <template id="messageTemplate">
+      <article class="message-row">
+        <div class="avatar"></div>
+        <div class="bubble"></div>
+      </article>
+    </template>
+
+    <script src="/chat.js"></script>
+  </body>
+</html>
+

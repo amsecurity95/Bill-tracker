@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Bill } from './entities/bill.entity';
@@ -33,14 +33,16 @@ export class BillsService {
   }
 
   async findOne(id: number): Promise<Bill> {
-    return this.billsRepository.findOne({ where: { id } });
+    const bill = await this.billsRepository.findOne({ where: { id } });
+    if (!bill) {
+      throw new NotFoundException(`Bill with id ${id} not found`);
+    }
+
+    return bill;
   }
 
   async update(id: number, updateBillDto: UpdateBillDto): Promise<Bill> {
     const bill = await this.findOne(id);
-    if (!bill) {
-      throw new Error('Bill not found');
-    }
 
     const updateData: any = { ...updateBillDto };
     if (updateBillDto.dueDate) {
@@ -52,7 +54,10 @@ export class BillsService {
   }
 
   async remove(id: number): Promise<void> {
-    await this.billsRepository.delete(id);
+    const result = await this.billsRepository.delete(id);
+    if (!result.affected) {
+      throw new NotFoundException(`Bill with id ${id} not found`);
+    }
   }
 
   async findUpcomingBills(days: number = 7): Promise<Bill[]> {
