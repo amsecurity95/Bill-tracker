@@ -85,6 +85,11 @@ The backend is configured to accept requests from:
 - `POST /ai/chat` - Send a prompt to Ollama
 - `GET /chat` - ChatGPT-style web chat UI
 
+`/chat` includes:
+- Conversation switching (saved in browser localStorage)
+- Markdown rendering (headings, lists, links, inline code)
+- Fenced code blocks with one-click copy buttons
+
 Example request body for `POST /ai/chat`:
 
 ```json
