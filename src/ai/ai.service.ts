@@ -27,8 +27,23 @@ export class AiService {
   private readonly baseUrl = (process.env.OLLAMA_BASE_URL || 'http://127.0.0.1:11434').replace(/\/+$/, '');
   private readonly defaultModel = process.env.OLLAMA_MODEL || 'llama3.1';
   private readonly timeoutMs = Number.parseInt(process.env.OLLAMA_TIMEOUT_MS || '30000', 10);
+  private readonly mockMode = process.env.AI_MOCK_MODE === 'true';
+  private readonly mockFallbackOnError = process.env.AI_MOCK_FALLBACK_ON_ERROR === 'true';
 
   async health() {
+    if (this.mockMode) {
+      return {
+        status: 'ok',
+        mode: 'mock',
+        reachable: true,
+        ollamaBaseUrl: this.baseUrl,
+        defaultModel: this.defaultModel,
+        availableModels: [this.defaultModel],
+        message: 'AI mock mode is enabled. Ollama is not being called.',
+        suggestion: 'Set AI_MOCK_MODE=false to call Ollama directly.',
+      };
+    }
+
     try {
       const response = await this.fetchWithTimeout('/api/tags', {
         method: 'GET',
@@ -85,6 +100,11 @@ export class AiService {
 
   async chat(chatDto: ChatDto) {
     const selectedModel = chatDto.model || this.defaultModel;
+
+    if (this.mockMode) {
+      return this.buildMockChatResponse(chatDto.prompt, selectedModel);
+    }
+
     const messages = [
       ...(chatDto.systemPrompt ? [{ role: 'system', content: chatDto.systemPrompt }] : []),
       { role: 'user', content: chatDto.prompt },
@@ -106,6 +126,15 @@ export class AiService {
     } catch (error) {
       const reason = this.getErrorReason(error);
       this.logger.error(`Ollama connectivity error (${this.baseUrl}): ${reason}`);
+
+      if (this.mockFallbackOnError) {
+        return this.buildMockChatResponse(
+          chatDto.prompt,
+          selectedModel,
+          `Ollama unreachable (${reason}). Returned mock response instead.`,
+        );
+      }
+
       throw new ServiceUnavailableException({
         message: `Ollama is unreachable at ${this.baseUrl}. ${reason}`,
         suggestion:
@@ -119,6 +148,14 @@ export class AiService {
         response.status === 404
           ? ` The model "${selectedModel}" may be missing. Try: ollama pull ${selectedModel}`
           : '';
+
+      if (this.mockFallbackOnError) {
+        return this.buildMockChatResponse(
+          chatDto.prompt,
+          selectedModel,
+          `Ollama HTTP ${response.status}. Returned mock response instead.`,
+        );
+      }
 
       throw new BadGatewayException({
         message: `Ollama request failed with HTTP ${response.status}.${modelHint}`,
@@ -143,6 +180,33 @@ export class AiService {
       done: body.done,
       totalDuration: body.total_duration,
     };
+  }
+
+  private buildMockChatResponse(prompt: string, model: string, note?: string) {
+    return {
+      model: `mock:${model}`,
+      reply: this.generateMockReply(prompt),
+      done: true,
+      mock: true,
+      note,
+    };
+  }
+
+  private generateMockReply(prompt: string): string {
+    const normalized = prompt.trim();
+    if (!normalized) {
+      return 'Tell me what you need help with, and I will suggest a simple next step.';
+    }
+
+    const shortPrompt = normalized.length > 220 ? `${normalized.slice(0, 220)}...` : normalized;
+    return [
+      'Mock mode reply (Ollama fallback):',
+      `I received: "${shortPrompt}"`,
+      'Quick financial guidance:',
+      '1) List your fixed bills due in the next 7 days.',
+      '2) Prioritize essentials first (housing, utilities, debt minimums).',
+      '3) Set reminders for 7, 3, and 1 day before each due date.',
+    ].join('\n');
   }
 
   private async fetchWithTimeout(path: string, init: RequestInit): Promise<Response> {

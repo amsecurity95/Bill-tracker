@@ -5,6 +5,7 @@ import { BillsModule } from './bills/bills.module';
 import { ReminderModule } from './reminder/reminder.module';
 import { Bill } from './bills/entities/bill.entity';
 import { AiModule } from './ai/ai.module';
+import { UiController } from './ui/ui.controller';
 
 const databaseUrl =
   process.env.DATABASE_URL ||
@@ -15,6 +16,7 @@ const shouldUseDatabaseSsl =
     !/(localhost|127\.0\.0\.1)/i.test(databaseUrl));
 
 @Module({
+  controllers: [UiController],
   imports: [
     TypeOrmModule.forRoot({
       type: 'postgres',

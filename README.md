@@ -46,6 +46,8 @@ backend/
    - `OLLAMA_BASE_URL` - Ollama server URL (example: `http://127.0.0.1:11434`)
    - `OLLAMA_MODEL` - Default Ollama model (example: `llama3.1`)
    - `OLLAMA_TIMEOUT_MS` - Ollama request timeout in milliseconds
+   - `AI_MOCK_MODE` - When `true`, returns mock AI responses without calling Ollama
+   - `AI_MOCK_FALLBACK_ON_ERROR` - When `true`, falls back to mock responses if Ollama fails
 
 ## Environment Variables
 
@@ -57,6 +59,8 @@ EMAIL_PASS=your-app-password
 OLLAMA_BASE_URL=http://127.0.0.1:11434
 OLLAMA_MODEL=llama3.1
 OLLAMA_TIMEOUT_MS=30000
+AI_MOCK_MODE=false
+AI_MOCK_FALLBACK_ON_ERROR=false
 ```
 
 ## CORS Configuration
@@ -79,6 +83,7 @@ The backend is configured to accept requests from:
 ### AI (Ollama)
 - `GET /ai/health` - Check Ollama connectivity and available models
 - `POST /ai/chat` - Send a prompt to Ollama
+- `GET /chat` - ChatGPT-style web chat UI
 
 Example request body for `POST /ai/chat`:
 
@@ -88,6 +93,12 @@ Example request body for `POST /ai/chat`:
   "model": "llama3.1",
   "systemPrompt": "You are a concise financial assistant."
 }
+```
+
+If Ollama is unavailable and you still want the chat UI/API to respond, set:
+
+```bash
+AI_MOCK_MODE=true
 ```
 
 ## Development
