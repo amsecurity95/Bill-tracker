@@ -4,6 +4,7 @@ import { ScheduleModule } from '@nestjs/schedule';
 import { BillsModule } from './bills/bills.module';
 import { ReminderModule } from './reminder/reminder.module';
 import { Bill } from './bills/entities/bill.entity';
+import { AiModule } from './ai/ai.module';
 
 const databaseUrl =
   process.env.DATABASE_URL ||
@@ -25,6 +26,7 @@ const shouldUseDatabaseSsl =
     ScheduleModule.forRoot(),
     BillsModule,
     ReminderModule,
+    AiModule,
   ],
 })
 export class AppModule {}

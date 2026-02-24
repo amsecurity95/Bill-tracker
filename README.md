@@ -43,6 +43,9 @@ backend/
    - `PORT` - Server port (Railway sets this automatically)
    - `EMAIL_USER` - Gmail address for sending reminders
    - `EMAIL_PASS` - Gmail app password
+   - `OLLAMA_BASE_URL` - Ollama server URL (example: `http://127.0.0.1:11434`)
+   - `OLLAMA_MODEL` - Default Ollama model (example: `llama3.1`)
+   - `OLLAMA_TIMEOUT_MS` - Ollama request timeout in milliseconds
 
 ## Environment Variables
 
@@ -51,6 +54,9 @@ DATABASE_URL=postgresql://user:password@host:port/database
 PORT=3000
 EMAIL_USER=your-email@gmail.com
 EMAIL_PASS=your-app-password
+OLLAMA_BASE_URL=http://127.0.0.1:11434
+OLLAMA_MODEL=llama3.1
+OLLAMA_TIMEOUT_MS=30000
 ```
 
 ## CORS Configuration
@@ -69,6 +75,20 @@ The backend is configured to accept requests from:
 - `GET /bills/:id` - Get a specific bill
 - `PATCH /bills/:id` - Update a bill
 - `DELETE /bills/:id` - Delete a bill
+
+### AI (Ollama)
+- `GET /ai/health` - Check Ollama connectivity and available models
+- `POST /ai/chat` - Send a prompt to Ollama
+
+Example request body for `POST /ai/chat`:
+
+```json
+{
+  "prompt": "Summarize my upcoming bills",
+  "model": "llama3.1",
+  "systemPrompt": "You are a concise financial assistant."
+}
+```
 
 ## Development
 
