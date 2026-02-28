@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Self-Hosted LLM - Quick Start</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 600px; margin: 2rem auto; padding: 0 1rem; line-height: 1.6; }
+    h1 { color: #333; }
+    h2 { color: #555; margin-top: 1.5rem; }
+    code { background: #f4f4f4; padding: 0.2em 0.4em; border-radius: 4px; font-size: 0.9em; }
+    pre { background: #f4f4f4; padding: 1rem; border-radius: 6px; overflow-x: auto; }
+    a { color: #0066cc; }
+  </style>
+</head>
+<body>
+  <h1>Self-Hosted LLM Chat</h1>
+  <p>Your data never leaves your machine.</p>
+
+  <h2>Option 1: Run locally (recommended for GPU)</h2>
+  <ol>
+    <li>Install Ollama from <a href="https://ollama.ai">ollama.ai</a></li>
+    <li>Pull a model:
+      <pre>ollama pull llama3.2</pre>
+    </li>
+    <li>Start the chat:
+      <pre>cd llm-chat
+npm install
+npm start</pre>
+    </li>
+    <li>Open <a href="http://localhost:3001">http://localhost:3001</a></li>
+  </ol>
+
+  <h2>Option 2: Docker</h2>
+  <pre>cd llm-chat
+docker compose up -d
+docker exec -it ollama ollama pull llama3.2</pre>
+  <p>Then open <a href="http://localhost:3001">http://localhost:3001</a></p>
+
+  <h2>Other models to try</h2>
+  <p><code>ollama pull mistral</code> · <code>ollama pull deepseek</code> · <code>ollama pull qwen2</code></p>
+</body>
+</html>

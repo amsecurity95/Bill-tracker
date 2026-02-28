@@ -1,0 +1,33 @@
+# Self-Hosted LLM Chat
+# Run: docker compose up -d
+# Then: ollama pull llama3.2 (in another terminal, or exec into ollama container)
+
+services:
+  ollama:
+    image: ollama/ollama:latest
+    container_name: ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    # Uncomment for GPU support (NVIDIA):
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: 1
+    #           capabilities: [gpu]
+
+  chat:
+    build: .
+    container_name: llm-chat
+    ports:
+      - "3001:3001"
+    environment:
+      - OLLAMA_URL=http://ollama:11434
+    depends_on:
+      - ollama
+
+volumes:
+  ollama_data:
