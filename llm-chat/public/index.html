@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Self-Hosted LLM · Your Data Stays Local</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-deep: #0d1117;
+      --bg-surface: #161b22;
+      --bg-elevated: #21262d;
+      --border: #30363d;
+      --text: #e6edf3;
+      --text-muted: #8b949e;
+      --accent: #58a6ff;
+      --accent-dim: #388bfd66;
+      --success: #3fb950;
+      --warning: #d29922;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Outfit', system-ui, sans-serif;
+      background: var(--bg-deep);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    header {
+      padding: 1rem 1.5rem;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+    }
+
+    .logo {
+      font-weight: 700;
+      font-size: 1.25rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .logo::before {
+      content: '◆';
+      color: var(--accent);
+      font-size: 0.9em;
+    }
+
+    .status {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--text-muted);
+      animation: pulse 2s infinite;
+    }
+
+    .status-dot.connected {
+      background: var(--success);
+    }
+
+    .status-dot.disconnected {
+      background: var(--warning);
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+
+    .model-select {
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text);
+      padding: 0.4rem 0.75rem;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.85rem;
+      cursor: pointer;
+    }
+
+    main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      max-width: 48rem;
+      margin: 0 auto;
+      width: 100%;
+      padding: 1rem;
+    }
+
+    .messages {
+      flex: 1;
+      overflow-y: auto;
+      padding-bottom: 1rem;
+    }
+
+    .message {
+      margin-bottom: 1.25rem;
+      animation: fadeIn 0.3s ease;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .message-role {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      margin-bottom: 0.25rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .message-role.user { color: var(--accent); }
+    .message-role.assistant { color: var(--success); }
+
+    .message-content {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.9rem;
+      line-height: 1.6;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    .input-area {
+      padding: 1rem 0;
+      border-top: 1px solid var(--border);
+    }
+
+    .input-wrapper {
+      display: flex;
+      gap: 0.5rem;
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0.5rem;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .input-wrapper:focus-within {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2px var(--accent-dim);
+    }
+
+    #prompt {
+      flex: 1;
+      background: none;
+      border: none;
+      color: var(--text);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.95rem;
+      padding: 0.5rem;
+      resize: none;
+      min-height: 44px;
+      max-height: 200px;
+    }
+
+    #prompt:focus {
+      outline: none;
+    }
+
+    #prompt::placeholder {
+      color: var(--text-muted);
+    }
+
+    #send {
+      background: var(--accent);
+      color: var(--bg-deep);
+      border: none;
+      border-radius: 6px;
+      padding: 0.5rem 1rem;
+      font-weight: 600;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: opacity 0.2s, transform 0.2s;
+    }
+
+    #send:hover:not(:disabled) {
+      opacity: 0.9;
+      transform: scale(1.02);
+    }
+
+    #send:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .empty-state {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 2rem;
+      color: var(--text-muted);
+    }
+
+    .empty-state h2 {
+      font-size: 1.25rem;
+      color: var(--text);
+      margin-bottom: 0.5rem;
+    }
+
+    .empty-state p {
+      font-size: 0.9rem;
+      max-width: 20rem;
+      line-height: 1.5;
+    }
+
+    .typing {
+      display: inline-block;
+      width: 4px;
+      height: 1em;
+      background: var(--accent);
+      animation: blink 0.8s infinite;
+      vertical-align: text-bottom;
+    }
+
+    @keyframes blink {
+      0%, 50% { opacity: 1; }
+      51%, 100% { opacity: 0; }
+    }
+
+    .error-banner {
+      background: rgba(210, 153, 34, 0.15);
+      border: 1px solid var(--warning);
+      border-radius: 6px;
+      padding: 0.75rem 1rem;
+      margin-bottom: 1rem;
+      font-size: 0.9rem;
+    }
+
+    .error-banner code {
+      font-family: 'JetBrains Mono', monospace;
+      background: var(--bg-elevated);
+      padding: 0.2rem 0.4rem;
+      border-radius: 4px;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="logo">Self-Hosted LLM</div>
+    <div class="status" id="status">
+      <span class="status-dot" id="statusDot"></span>
+      <span id="statusText">Checking...</span>
+    </div>
+    <select class="model-select" id="modelSelect">
+      <option value="">Select model</option>
+    </select>
+  </header>
+
+  <main>
+    <div id="errorBanner"></div>
+    <div class="messages" id="messages">
+      <div class="empty-state" id="emptyState">
+        <h2>Your data stays local</h2>
+        <p>Chat with models running on your machine. Nothing is sent to the cloud.</p>
+      </div>
+    </div>
+    <div class="input-area">
+      <div class="input-wrapper">
+        <textarea id="prompt" placeholder="Type your message..." rows="1"></textarea>
+        <button id="send" disabled>Send</button>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    const messagesEl = document.getElementById('messages');
+    const emptyState = document.getElementById('emptyState');
+    const promptEl = document.getElementById('prompt');
+    const sendBtn = document.getElementById('send');
+    const modelSelect = document.getElementById('modelSelect');
+    const statusDot = document.getElementById('statusDot');
+    const statusText = document.getElementById('statusText');
+    const errorBanner = document.getElementById('errorBanner');
+
+    let messages = [];
+    let isStreaming = false;
+
+    async function checkHealth() {
+      try {
+        const res = await fetch('/api/health');
+        const data = await res.json();
+        statusDot.className = 'status-dot ' + (data.ollama === 'connected' ? 'connected' : 'disconnected');
+        statusText.textContent = data.ollama === 'connected' 
+          ? `${data.models?.length || 0} model(s) available`
+          : 'Ollama offline';
+        
+        if (data.models?.length) {
+          modelSelect.innerHTML = '<option value="">Select model</option>' +
+            data.models.map(m => `<option value="${m.name}">${m.name}</option>`).join('');
+          if (!modelSelect.value && data.models[0]) {
+            modelSelect.value = data.models[0].name;
+          }
+        }
+        sendBtn.disabled = data.ollama !== 'connected' || !modelSelect.value;
+        errorBanner.innerHTML = data.ollama === 'disconnected' 
+          ? `<strong>Ollama not running.</strong> Run <code>ollama serve</code> in a terminal, then <code>ollama pull llama3.2</code> to download a model.`
+          : '';
+        return data.ollama === 'connected';
+      } catch {
+        statusDot.className = 'status-dot disconnected';
+        statusText.textContent = 'Server offline';
+        sendBtn.disabled = true;
+        errorBanner.innerHTML = '<strong>Cannot connect.</strong> Start the server with <code>npm start</code>.';
+        return false;
+      }
+    }
+
+    function addMessage(role, content) {
+      messages.push({ role, content });
+      if (emptyState) emptyState.remove();
+      const div = document.createElement('div');
+      div.className = 'message';
+      div.innerHTML = `
+        <div class="message-role ${role}">${role}</div>
+        <div class="message-content">${escapeHtml(content)}</div>
+      `;
+      messagesEl.appendChild(div);
+      messagesEl.scrollTop = messagesEl.scrollHeight;
+      return div.querySelector('.message-content');
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML.replace(/\n/g, '<br>');
+    }
+
+    async function sendMessage() {
+      const text = promptEl.value.trim();
+      if (!text || isStreaming) return;
+
+      const model = modelSelect.value;
+      if (!model) {
+        alert('Select a model first');
+        return;
+      }
+
+      promptEl.value = '';
+      isStreaming = true;
+      sendBtn.disabled = true;
+
+      addMessage('user', text);
+      const contentEl = addMessage('assistant', '');
+      contentEl.innerHTML = '<span class="typing"></span>';
+
+      try {
+        // Exclude the empty assistant message we just added
+        const ollamaMessages = messages.slice(0, -1).map(m => ({
+          role: m.role,
+          content: m.content,
+        }));
+
+        const response = await fetch('/api/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            model,
+            messages: ollamaMessages,
+            stream: true,
+          }),
+        });
+
+        if (!response.ok) {
+          const err = await response.json();
+          throw new Error(err.hint || err.error || 'Request failed');
+        }
+
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let fullText = '';
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          const chunk = decoder.decode(value, { stream: true });
+          const lines = chunk.split('\n').filter(Boolean);
+          for (const line of lines) {
+            try {
+              const data = JSON.parse(line);
+              if (data.message?.content) {
+                fullText += data.message.content;
+                contentEl.innerHTML = escapeHtml(fullText) + '<span class="typing"></span>';
+                messagesEl.scrollTop = messagesEl.scrollHeight;
+              }
+              if (data.done) break;
+            } catch (_) {}
+          }
+        }
+
+        contentEl.innerHTML = escapeHtml(fullText);
+        messages[messages.length - 1].content = fullText;
+      } catch (err) {
+        contentEl.innerHTML = escapeHtml(`Error: ${err.message}`);
+      } finally {
+        isStreaming = false;
+        sendBtn.disabled = !modelSelect.value;
+      }
+    }
+
+    promptEl.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendMessage();
+      }
+    });
+
+    sendBtn.addEventListener('click', sendMessage);
+
+    // Auto-resize textarea
+    promptEl.addEventListener('input', () => {
+      promptEl.style.height = 'auto';
+      promptEl.style.height = Math.min(promptEl.scrollHeight, 200) + 'px';
+    });
+
+    checkHealth();
+    setInterval(checkHealth, 10000);
+  </script>
+</body>
+</html>
